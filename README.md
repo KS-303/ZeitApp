@@ -1,16 +1,18 @@
-# ZeitApp V7.2
+# ZeitApp V8
 
-V7.2 basiert auf der Optik von V7 und enthält die wichtigen Fixes:
+V8 bringt automatischen Sync und Wiederherstellung:
 
-- Überstundenanzeige korrigiert
-  - negative Überstunden werden jetzt auch mobil korrekt mit Minus angezeigt
-- Google Sheets Export angepasst
-  - `fetch` nutzt jetzt `text/plain;charset=utf-8`
-  - das reduziert `Failed to fetch` bei Google Apps Script deutlich
-- `doGet()` im Apps Script enthalten
-  - Browser-Test der Webhook-URL zeigt jetzt sauber `Webhook läuft`
+- neuer Eintrag wird lokal gespeichert und direkt automatisch nach Google Sheets synchronisiert
+- offene Einträge können weiter manuell gesammelt synchronisiert werden
+- Rücklesen aus Google Sheets möglich
+- Google Sheet dient damit als Sicherung und Wiederherstellungsquelle
+- Korrigierte Einträge behalten ihre ID und werden im Sheet aktualisiert
 
 Wichtig:
-- In Google Apps Script die neue Datei `google-apps-script.gs` komplett ersetzen
-- Danach die Web-App neu bereitstellen
-- In der App die neue `/exec`-URL eintragen und speichern
+- `google-apps-script.gs` komplett in Google Apps Script ersetzen
+- Web-App neu bereitstellen
+- neue `/exec`-URL in der App speichern
+
+Hinweis:
+- App bleibt lokal schnell und offlinefähig
+- wenn beim Speichern kein Netz da ist, bleibt der Eintrag lokal offen und kann später synchronisiert werden

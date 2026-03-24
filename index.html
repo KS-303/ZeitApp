@@ -10,7 +10,7 @@
 </head>
 <body>
   <header class="app-header">
-    <div><h1>ZeitApp</h1><p class="muted">V7.2 – Zeiterfassung</p></div>
+    <div><h1>ZeitApp</h1><p class="muted">V7 – Feiertage, Abschlüsse, Monatsübersicht, Plausibilitätsprüfungen</p></div>
     <button id="installBtn" class="secondary hidden">App installieren</button>
   </header>
 
@@ -109,7 +109,7 @@
 
       <div class="stats" id="stats"></div>
 
-      <div class="actions wrap">
+      <div class="actions wrap"><button id="syncNowBtn" class="secondary" type="button">Alles synchronisieren</button><button id="syncReadBtn" class="secondary" type="button">Aus Sheets laden</button><span id="syncStatus" class="sync-status" data-kind="info">Noch kein Sync</span>
         <button id="pdfBtn">Wochenbericht als PDF</button>
         <button id="sheetBtn" class="secondary">Nach Google Sheets exportieren</button>
         <button id="xlsxBtn" class="secondary">Excel exportieren</button>

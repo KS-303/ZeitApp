@@ -1,4 +1,4 @@
-const DB_NAME='zeitapp_db_v7_2',DB_VERSION=1,STORE_ENTRIES='entries',STORE_SETTINGS='settings',STORE_META='meta';
+const DB_NAME='zeitapp_db_v8',DB_VERSION=1,STORE_ENTRIES='entries',STORE_SETTINGS='settings',STORE_META='meta';
 let db,deferredPrompt=null;
 const $=id=>document.getElementById(id);
 const installBtn=$('installBtn'),form=$('entryForm'),resetBtn=$('resetBtn'),entriesTable=$('entriesTable'),weekPicker=$('weekPicker'),stats=$('stats'),monthStats=$('monthStats'),pdfBtn=$('pdfBtn'),sheetBtn=$('sheetBtn'),csvBtn=$('csvBtn'),xlsxBtn=$('xlsxBtn'),saveSettingsBtn=$('saveSettingsBtn'),sheetWebhookInput=$('sheetWebhook'),backupBtn=$('backupBtn'),restoreBtn=$('restoreBtn'),restoreFile=$('restoreFile'),siteSelect=$('siteSelect'),vehicleSelect=$('vehicleSelect'),addSiteBtn=$('addSiteBtn'),addVehicleBtn=$('addVehicleBtn'),weeklyTargetInput=$('weeklyTarget'),workDaysPerWeekInput=$('workDaysPerWeek'),monthPicker=$('monthPicker'),refreshMonthBtn=$('refreshMonthBtn'),closeWeekBtn=$('closeWeekBtn'),reopenWeekBtn=$('reopenWeekBtn'),warningsBox=$('warningsBox');
@@ -78,6 +78,8 @@ resetBtn.addEventListener('click',async()=>{form.reset(); $('date').value=todayI
 weekPicker.addEventListener('change',render); monthPicker.addEventListener('change',renderMonth); refreshMonthBtn.addEventListener('click',renderMonth);
 pdfBtn.addEventListener('click',printWeeklyReport); sheetBtn.addEventListener('click',exportToGoogleSheets); csvBtn.addEventListener('click',exportCsv); xlsxBtn.addEventListener('click',exportXlsx);
 backupBtn.addEventListener('click',exportBackup); restoreBtn.addEventListener('click',()=>restoreFile.click()); restoreFile.addEventListener('change',importBackup);
+const syncNowBtn=document.getElementById('syncNowBtn'); if(syncNowBtn) syncNowBtn.addEventListener('click', ()=>exportToGoogleSheets());
+const syncReadBtn=document.getElementById('syncReadBtn'); if(syncReadBtn) syncReadBtn.addEventListener('click', ()=>syncFromGoogleSheets());
 closeWeekBtn.addEventListener('click',()=>setWeekClosed(true)); reopenWeekBtn.addEventListener('click',()=>setWeekClosed(false));
 
 function val(id){return $(id).value.trim()} function num(id){const v=parseFloat($(id).value); return Number.isFinite(v)?v:0}
@@ -169,13 +171,83 @@ async function exportRows(){const entries=await getWeekEntries(); return entries
 async function exportCsv(){const rows=await exportRows(); if(!rows.length) return alert('Für diese Woche gibt es keine Einträge.'); const headers=Object.keys(rows[0]), lines=[headers.join(';')]; for(const row of rows) lines.push(headers.map(h=>`"${String(row[h]).replaceAll('"','""')}"`).join(';')); downloadBlob(new Blob([lines.join('\n')],{type:'text/csv;charset=utf-8;'}),`wochenbericht_${weekPicker.value||currentWeekValue()}.csv`)}
 async function exportXlsx(){const rows=await exportRows(); if(!rows.length) return alert('Für diese Woche gibt es keine Einträge.'); const ws=XLSX.utils.json_to_sheet(rows), wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Wochenbericht'); XLSX.writeFile(wb,`wochenbericht_${weekPicker.value||currentWeekValue()}.xlsx`)}
 
+
+function setSyncStatus(text, kind='info'){
+  const el = document.getElementById('syncStatus');
+  if(!el) return;
+  el.textContent = text;
+  el.dataset.kind = kind;
+}
+async function autoSyncSingleEntry(entry){
+  const webhook = sheetWebhookInput.value.trim();
+  if(!webhook) return false;
+  try{
+    setSyncStatus('Synchronisiere …','info');
+    const payload = {
+      week: entry.week,
+      weeklyTarget: Number(weeklyTargetInput.value||40),
+      workDaysPerWeek: Number(workDaysPerWeekInput.value||5),
+      entries: [{...entry, workMinutes: calcWorkMinutes(entry)}]
+    };
+    const response = await fetch(webhook,{
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify(payload)
+    });
+    if(!response.ok) throw new Error('HTTP '+response.status);
+    const result = await response.json().catch(()=>({ok:true}));
+    entry.exported = true;
+    await putOne(STORE_ENTRIES, entry);
+    setSyncStatus(`Auto-Sync ok (${result.updated??0} aktualisiert, ${result.inserted??1} neu)`,'ok');
+    return true;
+  }catch(err){
+    setSyncStatus('Auto-Sync fehlgeschlagen – lokal gespeichert','warn');
+    return false;
+  }
+}
+async function syncFromGoogleSheets(){
+  const webhook = sheetWebhookInput.value.trim();
+  if(!webhook) return alert('Bitte zuerst den Google-Sheets-Webhook eintragen.');
+  try{
+    setSyncStatus('Lese Daten aus Google Sheets …','info');
+    const url = webhook + (webhook.includes('?') ? '&' : '?') + 'mode=read';
+    const response = await fetch(url);
+    if(!response.ok) throw new Error('HTTP '+response.status);
+    const data = await response.json();
+    const entries = data.entries || [];
+    let imported = 0, updated = 0;
+    for(const item of entries){
+      const existing = await getOne(STORE_ENTRIES, item.id);
+      if(!existing){
+        await putOne(STORE_ENTRIES, {...item, exported:true});
+        imported++;
+      }else{
+        const localTs = new Date(existing.updatedAt || 0).getTime();
+        const remoteTs = new Date(item.updatedAt || item.exportedAt || 0).getTime();
+        if(remoteTs > localTs){
+          await putOne(STORE_ENTRIES, {...existing, ...item, exported:true});
+          updated++;
+        }
+      }
+    }
+    await render();
+    await renderMonth();
+    setSyncStatus(`Rücklesen abgeschlossen (${imported} neu, ${updated} aktualisiert)`,'ok');
+    alert(`Rücklesen abgeschlossen. Neu: ${imported}, aktualisiert: ${updated}`);
+  }catch(err){
+    setSyncStatus('Rücklesen fehlgeschlagen','warn');
+    alert('Rücklesen fehlgeschlagen: ' + err.message);
+  }
+}
+
 async function exportToGoogleSheets(){
  const webhook=sheetWebhookInput.value.trim(); if(!webhook) return alert('Bitte zuerst den Google-Sheets-Webhook eintragen.');
+ setSyncStatus('Synchronisiere offene Einträge …','info');
  const allEntries=await getWeekEntries(), entries=allEntries.filter(e=>!e.exported); if(!entries.length) return alert('Keine offenen Einträge für den Export.');
  const payload={week:weekPicker.value||currentWeekValue(),weeklyTarget:Number(weeklyTargetInput.value||40),workDaysPerWeek:Number(workDaysPerWeekInput.value||5),entries:entries.map(e=>({...e,workMinutes:calcWorkMinutes(e)}))};
  try{ const response=await fetch(webhook,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)}); if(!response.ok) throw new Error('HTTP '+response.status); const result=await response.json().catch(()=>({ok:true}));
-   for(const e of entries){e.exported=true; await putOne(STORE_ENTRIES,e)} await render(); alert(`Export abgeschlossen. ${result.updated??0} aktualisiert, ${result.inserted??entries.length} neu.`)
- }catch(err){alert('Export fehlgeschlagen: '+err.message)}
+   for(const e of entries){e.exported=true; await putOne(STORE_ENTRIES,e)} await render(); setSyncStatus(`Sync ok (${result.updated??0} aktualisiert, ${result.inserted??entries.length} neu)`,'ok'); alert(`Export abgeschlossen. ${result.updated??0} aktualisiert, ${result.inserted??entries.length} neu.`)
+ }catch(err){setSyncStatus('Sync fehlgeschlagen','warn'); alert('Export fehlgeschlagen: '+err.message)}
 }
 
 async function printWeeklyReport(){
