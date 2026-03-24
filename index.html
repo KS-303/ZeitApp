@@ -4,27 +4,41 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="theme-color" content="#1f2937" />
-  <title>ZeitApp V7</title>
+  <title>ZeitApp V7.1</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <header class="app-header">
-    <div><h1>ZeitApp</h1><p class="muted">Zeiterfassung für den täglichen Einsatz – läuft lokal im Browser, ohne Cloud-Zwang.</p></div>
+    <div>
+      <h1>ZeitApp</h1>
+      <p class="muted">Schlichte Zeiterfassung für den täglichen Einsatz – läuft lokal im Browser, ohne Cloud-Zwang.</p>
+    </div>
     <button id="installBtn" class="secondary hidden">App installieren</button>
   </header>
 
   <main class="layout">
     <section class="card">
-      <div class="section-header"><h2>Eintrag erfassen</h2><span class="badge">V7</span></div>
+      <div class="section-header">
+        <h2>Eintrag erfassen</h2>
+        <span class="badge">V7.1</span>
+      </div>
+
       <form id="entryForm">
         <div class="grid two">
-          <label><span>Datum</span><input type="date" id="date" required /></label>
-          <label><span>Mitarbeiter</span><input type="text" id="employee" placeholder="Name" required /></label>
+          <label>
+            <span>Datum</span>
+            <input type="date" id="date" required />
+          </label>
+          <label>
+            <span>Mitarbeiter</span>
+            <input type="text" id="employee" placeholder="Name" required />
+          </label>
         </div>
 
         <div class="grid three">
-          <label><span>Typ</span>
+          <label>
+            <span>Typ</span>
             <select id="entryType">
               <option value="arbeit" selected>Arbeit</option>
               <option value="urlaub">Urlaub</option>
@@ -32,37 +46,91 @@
               <option value="feiertag">Feiertag</option>
             </select>
           </label>
-          <label><span>Baustelle</span><select id="siteSelect"></select></label>
-          <label><span>Fahrzeug</span><select id="vehicleSelect"></select></label>
+
+          <label>
+            <span>Baustelle</span>
+            <select id="siteSelect"></select>
+          </label>
+
+          <label>
+            <span>Fahrzeug</span>
+            <select id="vehicleSelect"></select>
+          </label>
         </div>
 
         <div class="grid two">
-          <label><span>Neue Baustelle</span><div class="inline"><input type="text" id="newSite" /><button type="button" id="addSiteBtn" class="secondary">+</button></div></label>
-          <label><span>Neues Fahrzeug</span><div class="inline"><input type="text" id="newVehicle" /><button type="button" id="addVehicleBtn" class="secondary">+</button></div></label>
+          <label>
+            <span>Neue Baustelle</span>
+            <div class="inline">
+              <input type="text" id="newSite" placeholder="Neue Baustelle" />
+              <button type="button" id="addSiteBtn" class="secondary">+</button>
+            </div>
+          </label>
+
+          <label>
+            <span>Neues Fahrzeug</span>
+            <div class="inline">
+              <input type="text" id="newVehicle" placeholder="Neues Fahrzeug" />
+              <button type="button" id="addVehicleBtn" class="secondary">+</button>
+            </div>
+          </label>
         </div>
 
         <div class="grid four">
-          <label><span>Arbeitsbeginn</span><input type="time" id="workStart" required /></label>
-          <label><span>Arbeitsende</span><input type="time" id="workEnd" required /></label>
-          <label><span>Fahrzeit (Min.)</span><input type="number" id="driveMinutes" min="0" value="0" /></label>
-          <label><span>Pause (Min.)</span><input type="number" id="breakMinutes" min="0" value="0" /></label>
+          <label>
+            <span>Arbeitsbeginn</span>
+            <input type="time" id="workStart" required />
+          </label>
+
+          <label>
+            <span>Arbeitsende</span>
+            <input type="time" id="workEnd" required />
+          </label>
+
+          <label>
+            <span>Fahrzeit (Min.)</span>
+            <input type="number" id="driveMinutes" min="0" value="0" />
+          </label>
+
+          <label>
+            <span>Pause (Min.)</span>
+            <input type="number" id="breakMinutes" min="0" value="0" />
+          </label>
         </div>
 
         <div class="grid four">
-          <label><span>Kilometer</span><input type="number" id="kilometers" min="0" step="0.1" value="0" /></label>
-          <label><span>Liter</span><input type="number" id="fuelLiters" min="0" step="0.01" value="0" /></label>
-          <label><span>Tankkosten (€)</span><input type="number" id="fuelAmount" min="0" step="0.01" value="0" /></label>
-          <label><span>Kilometerstand</span><input type="number" id="odometer" min="0" step="1" value="0" /></label>
+          <label>
+            <span>Kilometer</span>
+            <input type="number" id="kilometers" min="0" step="0.1" value="0" />
+          </label>
+
+          <label>
+            <span>Liter</span>
+            <input type="number" id="fuelLiters" min="0" step="0.01" value="0" />
+          </label>
+
+          <label>
+            <span>Tankkosten (€)</span>
+            <input type="number" id="fuelAmount" min="0" step="0.01" value="0" />
+          </label>
+
+          <label>
+            <span>Kilometerstand</span>
+            <input type="number" id="odometer" min="0" step="1" value="0" />
+          </label>
         </div>
 
         <div class="grid three">
-          <label><span>Tagesanteil</span>
+          <label>
+            <span>Tagesanteil</span>
             <select id="dayFraction">
               <option value="1" selected>1,0 Tag</option>
               <option value="0.5">0,5 Tag</option>
             </select>
           </label>
-          <label><span>Pausenautomatik</span>
+
+          <label>
+            <span>Pausenautomatik</span>
             <select id="breakMode">
               <option value="manual">Manuell</option>
               <option value="auto30">Auto 30 Min ab 6h</option>
@@ -70,69 +138,123 @@
               <option value="autoMixed" selected>Auto 30/45 Min</option>
             </select>
           </label>
-          <label><span>Tankbeleg</span><input type="file" id="receipt" accept="image/*" capture="environment" /></label>
+
+          <label>
+            <span>Tankbeleg</span>
+            <input type="file" id="receipt" accept="image/*" capture="environment" />
+          </label>
         </div>
 
-        <label><span>Notizen</span><textarea id="notes" rows="3"></textarea></label>
+        <label>
+          <span>Notizen</span>
+          <textarea id="notes" rows="3" placeholder="Besonderheiten, Hinweise, Material, Kunde …"></textarea>
+        </label>
+
         <input type="hidden" id="editId" />
 
-        <div class="actions"><button type="submit">Speichern</button><button type="button" id="resetBtn" class="secondary">Zurücksetzen</button></div>
+        <div class="actions">
+          <button type="submit">Speichern</button>
+          <button type="button" id="resetBtn" class="secondary">Zurücksetzen</button>
+        </div>
+
         <div id="warningsBox" class="warnings-box hidden"></div>
       </form>
     </section>
 
     <section class="card">
-      <div class="section-header"><h2>Wochenübersicht</h2><span class="badge badge-ok">DB aktiv</span></div>
+      <div class="section-header">
+        <h2>Wochenübersicht</h2>
+        <span class="badge badge-ok">DB aktiv</span>
+      </div>
 
       <div class="grid four">
-        <label><span>Kalenderwoche</span><input type="week" id="weekPicker" /></label>
-        <label><span>Wochenstunden (Soll)</span><input type="number" id="weeklyTarget" min="1" step="0.5" value="40" /></label>
-        <label><span>Arbeitstage/Woche</span>
+        <label>
+          <span>Kalenderwoche</span>
+          <input type="week" id="weekPicker" />
+        </label>
+
+        <label>
+          <span>Wochenstunden (Soll)</span>
+          <input type="number" id="weeklyTarget" min="1" step="0.5" value="40" />
+        </label>
+
+        <label>
+          <span>Arbeitstage/Woche</span>
           <select id="workDaysPerWeek">
             <option value="5" selected>5</option>
             <option value="6">6</option>
           </select>
         </label>
-        <label><span>Feiertage</span>
+
+        <label>
+          <span>Feiertage</span>
           <input type="text" value="Manuell über Typ = Feiertag" disabled />
         </label>
       </div>
 
       <div class="grid two">
-        <label><span>Google-Sheets-Webhook</span><input type="url" id="sheetWebhook" placeholder="https://script.google.com/macros/s/.../exec" /></label>
+        <label>
+          <span>Google-Sheets-Webhook</span>
+          <input type="url" id="sheetWebhook" placeholder="https://script.google.com/macros/s/.../exec" />
+        </label>
+
         <div class="actions wrap align-end">
-          <button id="saveSettingsBtn" class="secondary">Einstellungen speichern</button>
-          <button id="closeWeekBtn" class="secondary">Woche abschließen</button>
-          <button id="reopenWeekBtn" class="secondary">Woche wieder öffnen</button>
+          <button id="saveSettingsBtn" class="secondary" type="button">Einstellungen speichern</button>
+          <button id="closeWeekBtn" class="secondary" type="button">Woche abschließen</button>
+          <button id="reopenWeekBtn" class="secondary" type="button">Woche wieder öffnen</button>
         </div>
       </div>
 
       <div class="stats" id="stats"></div>
 
       <div class="actions wrap">
-        <button id="pdfBtn">Wochenbericht als PDF</button>
-        <button id="sheetBtn" class="secondary">Nach Google Sheets exportieren</button>
-        <button id="xlsxBtn" class="secondary">Excel exportieren</button>
-        <button id="csvBtn" class="secondary">CSV exportieren</button>
-        <button id="backupBtn" class="secondary">Backup</button>
-        <button id="restoreBtn" class="secondary">Restore</button>
+        <button id="pdfBtn" type="button">Wochenbericht als PDF</button>
+        <button id="sheetBtn" class="secondary" type="button">Nach Google Sheets exportieren</button>
+        <button id="xlsxBtn" class="secondary" type="button">Excel exportieren</button>
+        <button id="csvBtn" class="secondary" type="button">CSV exportieren</button>
+        <button id="backupBtn" class="secondary" type="button">Backup</button>
+        <button id="restoreBtn" class="secondary" type="button">Restore</button>
         <input type="file" id="restoreFile" accept="application/json" class="hidden-file" />
       </div>
 
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Datum</th><th>Typ</th><th>Mitarbeiter</th><th>Baustelle</th><th>Arbeitszeit</th><th>Fahrzeit</th><th>Pause</th><th>km</th><th>Export</th><th></th></tr></thead>
+          <thead>
+            <tr>
+              <th>Datum</th>
+              <th>Typ</th>
+              <th>Mitarbeiter</th>
+              <th>Baustelle</th>
+              <th>Arbeitszeit</th>
+              <th>Fahrzeit</th>
+              <th>Pause</th>
+              <th>km</th>
+              <th>Export</th>
+              <th></th>
+            </tr>
+          </thead>
           <tbody id="entriesTable"></tbody>
         </table>
       </div>
     </section>
 
     <section class="card full-width">
-      <div class="section-header"><h2>Monatsübersicht</h2><span class="badge">Monat</span></div>
-      <div class="grid two">
-        <label><span>Monat</span><input type="month" id="monthPicker" /></label>
-        <div class="actions align-end"><button id="refreshMonthBtn" class="secondary">Monat aktualisieren</button></div>
+      <div class="section-header">
+        <h2>Monatsübersicht</h2>
+        <span class="badge">Monat</span>
       </div>
+
+      <div class="grid two">
+        <label>
+          <span>Monat</span>
+          <input type="month" id="monthPicker" />
+        </label>
+
+        <div class="actions align-end">
+          <button id="refreshMonthBtn" class="secondary" type="button">Monat aktualisieren</button>
+        </div>
+      </div>
+
       <div class="stats" id="monthStats"></div>
     </section>
   </main>
