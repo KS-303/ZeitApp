@@ -1,23 +1,16 @@
-# ZeitApp V7.1
+# ZeitApp V7.2
 
-Neu in V7.1:
-- Feiertage nur noch **manuell** über `Typ = Feiertag`
-- keine automatische Feiertagslogik mehr
-- dadurch einfacher und robuster im Alltag
+V7.2 basiert auf der Optik von V7 und enthält die wichtigen Fixes:
 
-Warum:
-Automatische Feiertagslisten klingen gut, sind in der Praxis aber oft falsch oder unvollständig. In V7.1 werden Feiertage bewusst genauso gebucht wie Urlaub oder Krank.
+- Überstundenanzeige korrigiert
+  - negative Überstunden werden jetzt auch mobil korrekt mit Minus angezeigt
+- Google Sheets Export angepasst
+  - `fetch` nutzt jetzt `text/plain;charset=utf-8`
+  - das reduziert `Failed to fetch` bei Google Apps Script deutlich
+- `doGet()` im Apps Script enthalten
+  - Browser-Test der Webhook-URL zeigt jetzt sauber `Webhook läuft`
 
-So nutzt du Feiertage:
-1. Datum auswählen
-2. Typ = `Feiertag`
-3. optional 0,5 oder 1,0 Tag wählen
-4. speichern
-
-Alles andere aus V7 bleibt erhalten:
-- halbe Tage
-- Wochenabschluss
-- Plausibilitätsprüfungen
-- Monatsübersicht
-- Backup/Restore
-- Google Sheets Sync
+Wichtig:
+- In Google Apps Script die neue Datei `google-apps-script.gs` komplett ersetzen
+- Danach die Web-App neu bereitstellen
+- In der App die neue `/exec`-URL eintragen und speichern
