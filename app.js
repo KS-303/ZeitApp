@@ -259,8 +259,9 @@ async function exportToGoogleSheets(){
  const webhook=sheetWebhookInput.value.trim(); if(!webhook) return alert('Bitte zuerst den Google-Sheets-Webhook eintragen.');
  setSyncStatus('Synchronisiere offene Einträge …','info');
  const allEntries=await getWeekEntries(), entries=allEntries.filter(e=>!e.exported); if(!entries.length) return alert('Keine offenen Einträge für den Export.');
- const payload={accessKey:sheetAuthToken(),week:weekPicker.value||currentWeekValue(),weeklyTarget:Number(weeklyTargetInput.value||40),workDaysPerWeek:Number(workDaysPerWeekInput.value||5),entries:entries.map(e=>({...e,workMinutes:calcWorkMinutes(e)}))};
- try{ const response=await fetch(webhook,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)}); if(!response.ok) throw new Error('HTTP '+response.status); const result=assertSheetResult(await response.json());
+ try{
+   const payload={accessKey:sheetAuthToken(),week:weekPicker.value||currentWeekValue(),weeklyTarget:Number(weeklyTargetInput.value||40),workDaysPerWeek:Number(workDaysPerWeekInput.value||5),entries:entries.map(e=>({...e,workMinutes:calcWorkMinutes(e)}))};
+   const response=await fetch(webhook,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)}); if(!response.ok) throw new Error('HTTP '+response.status); const result=assertSheetResult(await response.json());
    for(const e of entries){e.exported=true; await putOne(STORE_ENTRIES,e)} await render(); setSyncStatus(`Sync ok (${result.updated??0} aktualisiert, ${result.inserted??entries.length} neu)`,'ok'); alert(`Export abgeschlossen. ${result.updated??0} aktualisiert, ${result.inserted??entries.length} neu.`)
  }catch(err){setSyncStatus('Sync fehlgeschlagen','warn'); alert('Export fehlgeschlagen: '+err.message)}
 }
