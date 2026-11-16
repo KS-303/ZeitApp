@@ -1,7 +1,14 @@
+// Der Zugriffsschluessel wird nur in Google Script Properties gesetzt.
+function authorized_(data) {
+  var expected=PropertiesService.getScriptProperties().getProperty('ZEITAPP_ACCESS_KEY');
+  return typeof expected==='string' && expected.length>=32 && data && typeof data.accessKey==='string' && data.accessKey===expected;
+}
+function json_(obj){return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);}
+
 function doGet(e){
   var mode = e && e.parameter && e.parameter.mode ? e.parameter.mode : '';
   if (mode === 'read') {
-    return readEntries_();
+    return json_({ok:false,error:'Lesezugriff nur per authentifiziertem POST'});
   }
   return ContentService
     .createTextOutput(JSON.stringify({ ok: true, message: "Webhook läuft" }))
@@ -9,10 +16,16 @@ function doGet(e){
 }
 
 function doPost(e){
+  var data;
+  try{data=JSON.parse(e && e.postData && e.postData.contents || '{}');}
+  catch(err){return json_({ok:false,error:'Ungueltige Anfrage'});}
+  if(!authorized_(data))return json_({ok:false,error:'Zugriff verweigert'});
+  if(data.mode==='read')return readEntries_();
+  if(data.mode && data.mode!=='write')return json_({ok:false,error:'Unbekannte Aktion'});
+  if(!Array.isArray(data.entries)||data.entries.length>500)return json_({ok:false,error:'Ungueltige Eintraege'});
   var ss=SpreadsheetApp.getActiveSpreadsheet();
   var dataSheet=ss.getSheetByName('Zeiten')||ss.insertSheet('Zeiten');
   var summarySheet=ss.getSheetByName('Monatsauswertung')||ss.insertSheet('Monatsauswertung');
-  var data=JSON.parse(e.postData.contents||'{}');
 
   if(dataSheet.getLastRow()===0){
     dataSheet.appendRow(['EintragID','Woche','Monat','Datum','Typ','Anteil','Mitarbeiter','Baustelle','Fahrzeug','Arbeitsbeginn','Arbeitsende','Arbeitsminuten','FahrzeitMin','PauseMin','Kilometer','Liter','Tankkosten','Kilometerstand','Notizen','UpdatedAt','ExportiertAm']);
