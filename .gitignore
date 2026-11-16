@@ -1,0 +1,41 @@
+# Dependencies and local outputs
+node_modules/
+dist/
+build/
+coverage/
+*.log
+*.tmp
+*.bak
+.DS_Store
+Thumbs.db
+
+# Local user data, exports and backups
+private/
+privat/
+local-data/
+backups/
+*.sqlite
+*.sqlite3
+*.db
+*.csv
+*.xlsx
+*.xls
+*.pdf
+*.ics
+*.har
+*.pcap
+*.pcapng
+
+# Secrets, environment and certificate files
+.env
+.env.*
+!.env.example
+.npmrc
+*.pem
+*.key
+*.pfx
+*.p12
+credentials.json
+service-account*.json
+
+# Never commit actual Google Sheets synchronization keys.
