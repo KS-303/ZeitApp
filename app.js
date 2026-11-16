@@ -17,11 +17,12 @@ function getAll(n){return new Promise((res,rej)=>{const r=tx(n).getAll();r.onsuc
 async function seedDefaults(){
  if(!await getOne(STORE_META,'sites')) await putOne(STORE_META,{key:'sites',values:['Bitte wählen','Unbekannt / wechselnd']});
  if(!await getOne(STORE_META,'vehicles')) await putOne(STORE_META,{key:'vehicles',values:['Bitte wählen','Kein Fahrzeug']});
- const defaults={employee:'',weeklyTarget:40,workDaysPerWeek:5,sheetWebhook:''};
+ const defaults={employee:'',weeklyTarget:40,workDaysPerWeek:5,sheetWebhook:'',sheetAccessKey:''};
  for(const [k,v] of Object.entries(defaults)) if(!await getOne(STORE_SETTINGS,k)) await putOne(STORE_SETTINGS,{key:k,value:v});
 }
 async function loadSettings(){
  sheetWebhookInput.value=(await getOne(STORE_SETTINGS,'sheetWebhook'))?.value||'';
+ $('sheetAccessKey').value=(await getOne(STORE_SETTINGS,'sheetAccessKey'))?.value||'';
  $('employee').value=(await getOne(STORE_SETTINGS,'employee'))?.value||'';
  weeklyTargetInput.value=(await getOne(STORE_SETTINGS,'weeklyTarget'))?.value||40;
  workDaysPerWeekInput.value=(await getOne(STORE_SETTINGS,'workDaysPerWeek'))?.value||5;
@@ -29,6 +30,7 @@ async function loadSettings(){
 }
 async function saveSettings(){
  await putOne(STORE_SETTINGS,{key:'sheetWebhook',value:sheetWebhookInput.value.trim()});
+ await putOne(STORE_SETTINGS,{key:'sheetAccessKey',value:$('sheetAccessKey').value.trim()});
  await putOne(STORE_SETTINGS,{key:'employee',value:$('employee').value.trim()});
  await putOne(STORE_SETTINGS,{key:'weeklyTarget',value:Number(weeklyTargetInput.value||40)});
  await putOne(STORE_SETTINGS,{key:'workDaysPerWeek',value:Number(workDaysPerWeekInput.value||5)});
@@ -172,6 +174,15 @@ async function exportCsv(){const rows=await exportRows(); if(!rows.length) retur
 async function exportXlsx(){const rows=await exportRows(); if(!rows.length) return alert('Für diese Woche gibt es keine Einträge.'); const ws=XLSX.utils.json_to_sheet(rows), wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Wochenbericht'); XLSX.writeFile(wb,`wochenbericht_${weekPicker.value||currentWeekValue()}.xlsx`)}
 
 
+function sheetAuthToken(){
+  const token=$('sheetAccessKey').value.trim();
+  if(!token) throw new Error('Google-Sheets-Zugriffsschluessel fehlt. Bitte unter Einstellungen hinterlegen.');
+  return token;
+}
+function assertSheetResult(data){
+  if(!data || data.ok!==true) throw new Error('Google-Sheets-Anfrage abgelehnt: ' + (data && data.error ? data.error : 'ungueltige Antwort'));
+  return data;
+}
 function setSyncStatus(text, kind='info'){
   const el = document.getElementById('syncStatus');
   if(!el) return;
@@ -187,6 +198,7 @@ async function autoSyncSingleEntry(entry){
       week: entry.week,
       weeklyTarget: Number(weeklyTargetInput.value||40),
       workDaysPerWeek: Number(workDaysPerWeekInput.value||5),
+      accessKey: sheetAuthToken(),
       entries: [{...entry, workMinutes: calcWorkMinutes(entry)}]
     };
     const response = await fetch(webhook,{
@@ -195,7 +207,7 @@ async function autoSyncSingleEntry(entry){
       body:JSON.stringify(payload)
     });
     if(!response.ok) throw new Error('HTTP '+response.status);
-    const result = await response.json().catch(()=>({ok:true}));
+    const result = assertSheetResult(await response.json());
     entry.exported = true;
     await putOne(STORE_ENTRIES, entry);
     setSyncStatus(`Auto-Sync ok (${result.updated??0} aktualisiert, ${result.inserted??1} neu)`,'ok');
@@ -210,10 +222,13 @@ async function syncFromGoogleSheets(){
   if(!webhook) return alert('Bitte zuerst den Google-Sheets-Webhook eintragen.');
   try{
     setSyncStatus('Lese Daten aus Google Sheets …','info');
-    const url = webhook + (webhook.includes('?') ? '&' : '?') + 'mode=read';
-    const response = await fetch(url);
+    const response = await fetch(webhook,{
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({mode:'read',accessKey:sheetAuthToken()})
+    });
     if(!response.ok) throw new Error('HTTP '+response.status);
-    const data = await response.json();
+    const data = assertSheetResult(await response.json());
     const entries = data.entries || [];
     let imported = 0, updated = 0;
     for(const item of entries){
@@ -244,8 +259,8 @@ async function exportToGoogleSheets(){
  const webhook=sheetWebhookInput.value.trim(); if(!webhook) return alert('Bitte zuerst den Google-Sheets-Webhook eintragen.');
  setSyncStatus('Synchronisiere offene Einträge …','info');
  const allEntries=await getWeekEntries(), entries=allEntries.filter(e=>!e.exported); if(!entries.length) return alert('Keine offenen Einträge für den Export.');
- const payload={week:weekPicker.value||currentWeekValue(),weeklyTarget:Number(weeklyTargetInput.value||40),workDaysPerWeek:Number(workDaysPerWeekInput.value||5),entries:entries.map(e=>({...e,workMinutes:calcWorkMinutes(e)}))};
- try{ const response=await fetch(webhook,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)}); if(!response.ok) throw new Error('HTTP '+response.status); const result=await response.json().catch(()=>({ok:true}));
+ const payload={accessKey:sheetAuthToken(),week:weekPicker.value||currentWeekValue(),weeklyTarget:Number(weeklyTargetInput.value||40),workDaysPerWeek:Number(workDaysPerWeekInput.value||5),entries:entries.map(e=>({...e,workMinutes:calcWorkMinutes(e)}))};
+ try{ const response=await fetch(webhook,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)}); if(!response.ok) throw new Error('HTTP '+response.status); const result=assertSheetResult(await response.json());
    for(const e of entries){e.exported=true; await putOne(STORE_ENTRIES,e)} await render(); setSyncStatus(`Sync ok (${result.updated??0} aktualisiert, ${result.inserted??entries.length} neu)`,'ok'); alert(`Export abgeschlossen. ${result.updated??0} aktualisiert, ${result.inserted??entries.length} neu.`)
  }catch(err){setSyncStatus('Sync fehlgeschlagen','warn'); alert('Export fehlgeschlagen: '+err.message)}
 }
